@@ -1,0 +1,54 @@
+{\rtf1\ansi\ansicpg1253\deff0\nouicompat\deflang1032{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.22621}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\f0\fs22\lang9 create a classifier predict the creditability of each customer:\par
+\par
+The problem provide 4 different tables data.\par
+\tab "Default_Data" : default and not default cases in customer product level,\par
+\tab "Loan_Information" : loan informations in customer product level\par
+\tab "Credit_Bureau_Information": acquisition score in customer level\par
+\tab Client_Information: pre-calculated anonymous features in customer level\par
+Inorder to explore the data in depth the above table merged properly and some usedful graphs and pivot tables are created.\par
+Also new columns are created in order to asnwer the questions of the business problem:\par
+\tab\b target\b0 : if default month in default Data is na the target is 0 otherwise 1. This \tab indicates the responce variable for our clasifier.\par
+The project is sepeared to 4 different parts:\par
+1. load the row data using pandas in order to be in a tabular form and save it on pkl on data folder.\par
+2.Explore the data using graphs and pivot tables that helps to understand the problem.\par
+\tab I didn't have enough time to investigate in depth this part of the project. I created a function "exporeData_plots.py" with some plot across the data. Some high level points are:\par
+\tab The large amount of Default value (DVAL) is between 1000 and 2000 amount. \par
+\tab The default month (DMON) follow an extremly right skewed descributionand the \tab majority of the cases are between 6 and 12 months. The above 2 findings are logical based on the business because generally Unsecured personal loans are small with short durations.\par
+\tab DVAL and DMON have outliers but this part is out of this scope according to the \tab business requirements (Terms between 12 and 60 months)\par
+\tab Target variable is equal distributed across the different products with a amall \tab increase of the true cases as the order number of the product increase. Perhaps this \tab indicates that products with bigger number is more risky \par
+\tab All products have almost the same median default value but product 1 has \tab significant bigger mode than all the other products.\par
+\tab Acquision score follow the same normal distribution by custome type \par
+\tab Open Balance distributed equal across the different repay period taking under \tab account the lomitations from the project (Terms to be more than 12 and less than \tab 60)\par
+\par
+3. Merge different tables on the proper level.\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Merge Default and loan infomrmation data tables on customer,product level. Exclude loans with Terms (RepayPeriod column in Loan information table) less than 12 months and more than 60 months.Also, based on ACCSTARTDATE and DMON it is calculated the defaultDate in order to examine if this date is after the business threshold of active loans 2019-10-01. There are 19 values wiith default value that the defaultDate is after the 2019-10-01. These values are omitted from the analysis.\par
+{\pntext\f1\'B7\tab}the client based tables (client info and client score ) are merged to the above table on UID level\par
+
+\pard\li720\sa200\sl276\slmult1 The result table has all the existing information about the products (Unsecured personal Loans) that each customer has taken, a score acquision per customer (SCORE), the customer type level (CLASS) , some informations about the nature of the loan (OPENBALANCE, REPAYPERIOD,ACCSTARTDATE) and some informations about the customer usage (FIRST/LAST_MONTH). Also systemo information as the date that each loan uploaded to the database is provided (SEARCHDATE). Notice, that it would be helpful if \b interest rate \b0 and \b issued loan amount, \b0 two of the most crucial characteristics of an unsecured loan,\b  \b0 was provided.\par
+
+\pard\sa200\sl276\slmult1 4. Split the data on training and test dataset (20%). \par
+\tab I examine the possibility to split the data using time stratification based on the \tab account start date (ACCSTARTDATE) .Assuming that ACCSTARTDATE is the issue loan \tab date, stratify time split try to simulate the real world problem that the creditability \tab of a user decrease in time if he/she takes more unsecured personal loans. \tab ACCSTARTDATE has only 1 na value, after scope oriented excluded data and it is \tab decided to be excluded from the further analysis.Unfortunately there are not \tab enough cases that a user take more than a loan. \par
+\tab Hence, one model is diffcult to identify what change in time. Hence, the pattern \tab analysis of the defaulted cases lead me to use customer random split. (the 20% of \tab the customers randomly will be on the test dataset). In more details, a new target \tab variable is created in order the training dataset to be on the customer level. If a \tab customer has at least one defaulted products for the model it is on the default area \tab (target is 1), otherwise is 0. \par
+5. Feature engineering:\par
+\tab Client Info table consists of 289 anonymous features. One of this feature is NA \tab across all the values. In addition some other features are constant across all values \tab 38. All these features a re omitted from the analysis. Categorical features are \tab transformed to numeric based on a custome process. It the categorical variable has \tab less than 4 levels one hot encoder is used otherwise a frequency encoding process \tab is applied. After the process that the categorical features transformed to numeric a \tab PCA analysis (with 0.99 variance explane threshold) used in order to reduce the \tab dimentionality. 41 principal components are selected from the PCA process.\par
+\tab In order to capture the creditability of a user one of the most important variable is \tab the economic enviroment. Seasonality effects and shocks are the trigger part of an \tab economic enviroments. Taking under account the above argument we try to capture \tab seasonal effect of  user or system trigger actions creating features from the loan \tab characteristics table.\par
+\tab loan information table aggregated by UID and some statistical features are \tab created based on min,max,mean functions. These initial features used in order to \tab create model features. For each date initial features DaySince/MonthsOf/YearsOf \tab features are created. \par
+\tab Also features are created based on the open balance aggregated by customer class \tab and applied statistical functions such as \tab min,max,sum,mean and std.\par
+\tab Na values handle carefully. It is calculated the median value using the training data \tab and  it is used in order to fill training and test data.\par
+\par
+6.Modeling part:\par
+\tab Three different algoriphs are selected to used in order to create the desired clasifier.\tab logistic regression, random forest and XGboost. Because of the complexity of the \tab problem and the non linear nature of the financia problems we expect tree based \tab ensemble learning techniques such as random foresr and XGboost to have better \tab result than logistic regression. AUC (measure the scalability of the model ) recall, \tab precision and F1 score are used in order to choose the appropriate algoriphm.\par
+\tab In order the model to be more closed to the reality, except from a test dataset with \tab the same response rate as the train, it is used an other test dataset (derived \tab randomly from the initial test dataset )that the reponse rate is equal to the real \tab problem 20% (real test dataset)\par
+\tab The model process that I follow has 3 different steps.\par
+\tab\tab 1. Try the 3 above techniques using default values and using only class \tab\tab\tab weight as the business mention. The results are evaluated based on the \tab\tab\tab above measure. Importance Features from random forest is used for \tab\tab\tab business insights. The best algoriphs is choosen based on the F1 score of the \tab\tab real test dataset.\par
+\tab\tab 2. grid search yusing the selected technic executes using cross validation for \tab\tab 5 folds in order to avoid the overfitting.\par
+\tab\tab 3. The best parameters based on the F1 score from the grid search are \tab\tab\tab usined in order to run the final model. The final model is evaluated on the \tab\tab initial and real test dataset parameters.\tab\par
+\tab\tab\b Results: \b0 The results are unexpectable good. AUC is more than 90%, \tab\tab\tab indicates that our model can rank in a good level a new batch of customers. \tab\tab Also  F1 score is more than 66% with a high recall (more than 90%) and a \tab\tab precision of 50%. These results shows that our model can correctly identify \tab\tab a significant percent of default cases but on the other hand can generate a \tab\tab substantial number of false positive cases. \par
+\tab\tab Generally fine tuning in grid search can fix the above gap between recall and \tab\tab precision if it need it. If the model is used in order to issue a new  loan \tab\tab\tab maybe we can stress the grid search in order the final model to have better \tab\tab precision. \tab\tab\par
+\tab\par
+\par
+}
+ 
